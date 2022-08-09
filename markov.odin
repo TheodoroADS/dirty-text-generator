@@ -3,6 +3,8 @@ package main
 import "core:fmt"
 import "core:os"
 import "core:math/rand"
+import "core:strings"
+import "core:runtime"
 
 Dataset :: [dynamic]string
 
@@ -48,7 +50,6 @@ read_dataset :: proc(filename : string) -> (Dataset , bool) {
 
                 state = .reading_word
                 begin = rune_num
-           //     fmt.printf("white -> word |%c| \n", c)
             }
             
         case .reading_word:
@@ -57,7 +58,6 @@ read_dataset :: proc(filename : string) -> (Dataset , bool) {
 
                 append(&dataset, string(text[begin:rune_num]))
                 state = .reading_white
-              //  fmt.printf("word -> white |%c| \n", c)
             }
         
         }
@@ -88,30 +88,17 @@ frequency_len :: proc(freqs : ^Frequencies) -> int{
 
 markov_train :: proc(markov : ^Markov, dataset : Dataset){
 
-    current_words , next_words :State
-
-    // defer delete(&current_words)
-
-    fmt.println("begin training")
+    current_words , next_words : State
 
     for i:= 0; i < len(dataset) - NGRAM_SIZE - 1 ; i += 1 {
 
-        // fmt.println("Iteration :", i )
 
         for j in 0..<NGRAM_SIZE {
             current_words[j] = dataset[i + j]
             next_words[j] = dataset[NGRAM_SIZE + i + j]
         }
 
-        // fmt.println(current_words)
-
         if current_words in markov {
-
-
-            // fmt.println(dataset[i + NGRAM_SIZE])
-
-            // fmt.println(markov[current_words])
-
 
             if next_words in markov[current_words]{
 
@@ -184,23 +171,55 @@ markov_generate_text :: proc(markov : ^Markov ,
     sampling_method : proc(freqs : Frequencies) -> State) -> (text : string, ok:  bool)
     {
 
-    text = "cock"
+    words := make([]string, nb_ngrams)
+    defer delete(words)
 
     current_state := initial_state
 
-    for word in initial_state{
-        // text += word + " "
-        fmt.print(word, " ")
+    concatenator : [2]string
+
+    for word , idx in initial_state{
+        concatenator[0] = word
+        concatenator[1] = " "
+        res , err := strings.concatenate_safe(concatenator[:])
+
+        if err != nil {
+            fmt.eprintln(err)
+            ok = false
+            return 
+        }
+
+        words[idx] = res
     }
 
-    for _ in 0..<nb_ngrams {
+    for idx in NGRAM_SIZE..<nb_ngrams {
 
         current_state = sampling_method(markov[current_state])
 
-        for word in current_state{
-            // text += word + " "
-            fmt.print(word, " ")
+        for word in current_state{  
+            concatenator[0] = word
+            concatenator[1] = " "
+            res , err := strings.concatenate_safe(concatenator[:])
+            
+            if err != nil {
+                fmt.eprintln(err)    
+                ok = false
+                return 
+            }
+       
+            words[idx] = res
         }
+
+    }
+
+    err : runtime.Allocator_Error
+
+    text, err  = strings.concatenate_safe(words)
+
+    if err != nil {
+        fmt.println(err)
+
+        return "", false
 
     }
 
