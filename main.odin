@@ -42,7 +42,7 @@ main :: proc(){
         }
     }
 
-    hohoho , yay := markov_generate_text(&markov, State{"i", "want"}, 20 , sample_most_likely)
+    hohoho , yay := markov_generate_text(&markov, State{"please","please"}, 40 , theodoro_sample)
     
     if !yay{
         fmt.println("Oh no")

@@ -18,7 +18,7 @@ Markov :: map[State]Frequencies
 
 BUFF_SIZE :: 200
 
-is_white :: proc(r : rune) -> bool {
+is_blank :: proc(r : rune) -> bool {
 
     return r == ' ' || r == '\n' || r == '\t' || r == '\r' || r == '\f'
 
@@ -46,7 +46,7 @@ read_dataset :: proc(filename : string) -> (Dataset , bool) {
 
         case .reading_white:
             
-            if !is_white(c) {
+            if !is_blank(c) {
 
                 state = .reading_word
                 begin = rune_num
@@ -54,7 +54,7 @@ read_dataset :: proc(filename : string) -> (Dataset , bool) {
             
         case .reading_word:
             
-            if is_white(c) {
+            if is_blank(c) {
 
                 append(&dataset, string(text[begin:rune_num]))
                 state = .reading_white
@@ -90,7 +90,7 @@ markov_train :: proc(markov : ^Markov, dataset : Dataset){
 
     current_words , next_words : State
 
-    for i:= 0; i < len(dataset) - NGRAM_SIZE - 1 ; i += 1 {
+    for i:= 0; i < len(dataset) - NGRAM_SIZE - 3; i += 1 {
 
 
         for j in 0..<NGRAM_SIZE {
@@ -164,6 +164,23 @@ sample_most_likely :: proc(freqs : Frequencies) -> State{
     return most_likely
 } 
 
+theodoro_sample :: proc(freqs : Frequencies) -> State {
+
+    for {
+
+        dice := rand.float64_range(0 , 1)
+
+        for state , prob in freqs {
+
+            if dice < prob {
+                return state
+            }
+
+        }
+
+    }
+
+}
 
 markov_generate_text :: proc(markov : ^Markov ,
     initial_state : State,
@@ -171,7 +188,7 @@ markov_generate_text :: proc(markov : ^Markov ,
     sampling_method : proc(freqs : Frequencies) -> State) -> (text : string, ok:  bool)
     {
 
-    words := make([]string, nb_ngrams)
+    words := make([]string, nb_ngrams * NGRAM_SIZE)
     defer delete(words)
 
     current_state := initial_state
@@ -192,7 +209,10 @@ markov_generate_text :: proc(markov : ^Markov ,
         words[idx] = res
     }
 
-    for idx in NGRAM_SIZE..<nb_ngrams {
+
+    idx := NGRAM_SIZE
+
+    for idx < nb_ngrams {
 
         current_state = sampling_method(markov[current_state])
 
@@ -208,6 +228,7 @@ markov_generate_text :: proc(markov : ^Markov ,
             }
        
             words[idx] = res
+            idx += 1
         }
 
     }
