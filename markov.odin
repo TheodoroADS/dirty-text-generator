@@ -225,7 +225,7 @@ jooj_sample :: proc(freqs : Frequencies) -> State {
 
     }
 
-    dice := int(rand.float64_range(0, f64(size - 1)))
+    dice := rand.uint32() % u32(size)
 
     return jooj[dice]
 
@@ -261,7 +261,7 @@ markov_generate_text :: proc(markov : ^Markov ,
 
     idx := NGRAM_SIZE
 
-    for idx < nb_ngrams {
+    for idx < nb_ngrams * NGRAM_SIZE {
 
         current_state = sampling_method(markov[current_state])
 
