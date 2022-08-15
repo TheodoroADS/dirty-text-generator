@@ -8,6 +8,14 @@ Inside the project diretory, run:
 odin run .
 ```
 
+To specify the initial ngrams of the program, build the project and run it with the words as arguments
+
+``` bash 
+odin build .
+markov.exe [word1] [word2] ...
+```
+Change the size of the NGRAM by modifying the NGRAM_SIZE constant in markov.odin
+
 Make sure you have [Odin](https://odin-lang.org/) installed!
 
 *OBS* : if you want to reuse the Python script for processing the text, make sure you have Spacy installed and run it as 

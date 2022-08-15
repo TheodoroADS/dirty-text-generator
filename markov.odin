@@ -231,6 +231,20 @@ jooj_sample :: proc(freqs : Frequencies) -> State {
 
 }
 
+markov_sample_initial_state :: proc(markov : ^Markov) -> State{
+    prob := 1.0 / f64(len(markov))
+
+    for {
+        for state in markov {
+            if dice := rand.float64_range(0,1); dice < prob {
+                return state
+            }
+        }
+
+    }    
+
+}
+
 markov_generate_text :: proc(markov : ^Markov ,
     initial_state : State,
     nb_ngrams : int,

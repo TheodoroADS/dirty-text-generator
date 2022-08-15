@@ -7,10 +7,17 @@ DEBUG :: false
 
 main :: proc(){
 
+    if len(os.args) != 1  && len(os.args) != NGRAM_SIZE + 1{
+
+        fmt.eprintln("This program only takes", NGRAM_SIZE, "words as input. Please input that amount of arguments or none")
+        return
+    }
+
     data, ok := read_dataset("processed.txt")
+    defer delete(data)
 
     if !ok {
-        fmt.println("Could not open file!")
+        fmt.eprintln("Could not open file!")
         return
     }
 
@@ -42,11 +49,28 @@ main :: proc(){
         }
     }
 
-    hohoho , yay := markov_generate_text(&markov, State{"please","i"}, 40 , jooj_sample)
+    initial_state : State
+
+    if len(os.args) == NGRAM_SIZE + 1 {
+
+
+        for i in 0..<NGRAM_SIZE{
+            initial_state[i] = os.args[i + 1] 
+        }
+
+        if !(initial_state in markov){
+            fmt.eprintln("Sorry, I've never seen those words used together :( Please try with others")
+            return
+        }
+    }else{
+        initial_state = markov_sample_initial_state(&markov)
+    }
+
+    hohoho , yay := markov_generate_text(&markov, initial_state , 40 , jooj_sample)
     
     if !yay{
         fmt.println("Oh no")
-        os.exit(1)
+        return
     }
 
     fmt.println(hohoho)
