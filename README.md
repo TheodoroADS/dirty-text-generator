@@ -1,4 +1,4 @@
-# Markov Chain for generating dirty text implemented on Odin
+# Markov Chain for generating dirty text implemented in Odin
 
 ## Quick Start 
 
