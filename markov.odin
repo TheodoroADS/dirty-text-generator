@@ -18,6 +18,11 @@ Markov :: map[State]Frequencies
 
 BUFF_SIZE :: 200
 
+// set to true if the automaton holds the probabilities of the next state
+// and false if it's the number of occurences
+PROBS :: false
+
+
 is_blank :: proc(r : rune) -> bool {
 
     return r == ' ' || r == '\n' || r == '\t' || r == '\r' || r == '\f'
@@ -74,11 +79,11 @@ read_dataset :: proc(filename : string) -> (Dataset , bool) {
 }
 
 
-frequency_len :: proc(freqs : ^Frequencies) -> int{
+frequency_len :: proc(freqs : Frequencies) -> int{
 
     result := 0
 
-    for _ , val in freqs^ {
+    for _ , val in freqs {
         result += int(val)
     }
 
@@ -129,17 +134,19 @@ markov_train :: proc(markov : ^Markov, dataset : Dataset){
 
     }
 
+    when PROBS {
 
-    for _ , node in markov{
-
-        total_size := frequency_len(&node)
-
-        for state , _ in node{
-
-            node[state] =  node[state] / f64(total_size)
-
+        for _ , node in markov{
+    
+            total_size := frequency_len(node)
+    
+            for state , _ in node{
+    
+                node[state] =  node[state] / f64(total_size)
+    
+            }
+    
         }
-
     }
 
 
@@ -164,21 +171,63 @@ sample_most_likely :: proc(freqs : Frequencies) -> State{
     return most_likely
 } 
 
-theodoro_sample :: proc(freqs : Frequencies) -> State {
-
-    for {
-
-        dice := rand.float64_range(0 , 1)
-
-        for state , prob in freqs {
-
-            if dice < prob {
-                return state
+when PROBS {
+    
+    gemetric_sample :: proc(freqs : Frequencies) -> State {
+    
+        for {
+    
+            dice := rand.float64_range(0 , 1)
+    
+            for state , prob in freqs {
+    
+                if dice < prob {
+                    return state
+                }
+    
             }
+    
+        }
+    
+    }
 
+}
+
+//perhaps the least optimised way to sample but I don't know how to sample accordng to the probabilities please help :(
+jooj_sample :: proc(freqs : Frequencies) -> State {
+
+    size := frequency_len(freqs)
+
+    if size == 0 {
+        return sample_most_likely(freqs)
+    }
+
+    jooj := make([]State, size)
+    defer delete(jooj)
+
+    idx := 0
+
+    for state , prob in freqs {
+
+        when PROBS {
+
+            freq := int(prob * f64(size)) 
+        }else{
+            freq := prob
         }
 
+        for i in 0..<freq{
+
+            jooj[idx] = state
+            idx += 1
+        }
+        
+
     }
+
+    dice := int(rand.float64_range(0, f64(size - 1)))
+
+    return jooj[dice]
 
 }
 
