@@ -79,7 +79,7 @@ read_dataset :: proc(filename : string) -> (Dataset , bool) {
 }
 
 
-frequency_len :: proc(freqs : Frequencies) -> int{
+frequency_total :: proc(freqs : Frequencies) -> int{
 
     result := 0
 
@@ -138,7 +138,7 @@ markov_train :: proc(markov : ^Markov, dataset : Dataset){
 
         for _ , node in markov{
     
-            total_size := frequency_len(node)
+            total_size := frequency_total(node)
     
             for state , _ in node{
     
@@ -196,7 +196,7 @@ when PROBS {
 //perhaps the least optimised way to sample but I don't know how to sample accordng to the probabilities please help :(
 jooj_sample :: proc(freqs : Frequencies) -> State {
 
-    size := frequency_len(freqs)
+    size := frequency_total(freqs)
 
     if size == 0 {
         return sample_most_likely(freqs)
@@ -230,6 +230,57 @@ jooj_sample :: proc(freqs : Frequencies) -> State {
     return jooj[dice]
 
 }
+
+when !PROBS {
+
+    //sampling method I copied from python's random.choices imlementation mwahaha
+    //it is better than jooj sample because it uses an array of length len(freqs) and not the frequency_total(freqs) 
+    python_sample :: proc(freqs : Frequencies) -> State {
+
+        size := len(freqs)
+
+        cum_weights := make([]f64, size) // very appropriate name
+        defer delete(cum_weights)
+
+        states := make([]State , size)
+        defer delete(states)
+
+        chosen_idx : int
+
+        idx := 0
+
+        for state , weight in freqs  {
+            if idx > 0 {
+                cum_weights[idx] = cum_weights[idx -1 ] + weight
+            }
+            states[idx] = state
+            idx += 1
+        }
+
+
+        dice := int(rand.float64_range(0,1) * cum_weights[size - 1])
+
+        // dichotomy search
+        i := 0
+        j := size -1
+        
+        for !(i<j ){
+            if int(cum_weights[int((i+j) /2)]) == dice {
+                break
+            }else if int(cum_weights[int((i+j) /2)]) < dice {
+                j = int((i + j) / 2) - 1
+            }else{ 
+                i = int((i + j) / 2) + 1
+            }
+        }
+        
+        chosen_idx = int((i+j) /2)
+        return states[chosen_idx]
+
+    }   
+
+}
+
 
 markov_sample_initial_state :: proc(markov : ^Markov) -> State{
     prob := 1.0 / f64(len(markov))

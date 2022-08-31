@@ -9,7 +9,7 @@ main :: proc(){
 
     if len(os.args) != 1  && len(os.args) != NGRAM_SIZE + 1{
 
-        fmt.eprintln("This program only takes", NGRAM_SIZE, "words as input. Please input that amount of arguments or none")
+        fmt.eprintln("This program takes", NGRAM_SIZE, "words as input. Please input that amount of arguments or none")
         return
     }
 
@@ -66,7 +66,7 @@ main :: proc(){
         initial_state = markov_sample_initial_state(&markov)
     }
 
-    hohoho , yay := markov_generate_text(&markov, initial_state , 40 , jooj_sample)
+    hohoho , yay := markov_generate_text(&markov, initial_state , 40 , python_sample)
     
     if !yay{
         fmt.println("Oh no")

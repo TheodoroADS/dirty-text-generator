@@ -25,7 +25,7 @@ with open(sys.argv[1], 'r' , encoding= "utf8") as input_file :
     result = ""
 
     for token in text:
-        if token.is_alpha:
+        if token.is_alpha: #or (token.is_punct and not token.text in ["(", ")" , ";", "”"]):
             result += " " + token.text
 
 
