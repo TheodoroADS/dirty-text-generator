@@ -5,6 +5,9 @@ import "core:os"
 
 DEBUG :: false
 
+N_SAYINGS :: 4
+
+
 main :: proc(){
 
     if len(os.args) != 1  && len(os.args) != NGRAM_SIZE + 1{
@@ -21,21 +24,24 @@ main :: proc(){
         return
     }
 
-    markov := make(Markov)
+    markov_he := make(Markov)
+    defer delete(markov_he)
 
+    markov_she := make(Markov)
+    defer delete(markov_she)
 
-    markov_train(&markov, data)
+    markov_train(&markov_he, data)
+    markov_train(&markov_she, data)
 
-    out , _ := os.open("jooj.txt", os.O_CREATE) 
-    defer os.close(out)
-
+    
     when DEBUG {
-
-        fmt.println("jooj" , len(markov))
+        out , _ := os.open("jooj.txt", os.O_CREATE) 
+        defer os.close(out)
+        
+        fmt.println("jooj" , len(markov_he))
     
-        for key , value in markov{
+        for key , value in markov_he{
     
-            // fmt.println("cock")
     
             fmt.fprintf(out, "(")
             
@@ -58,21 +64,38 @@ main :: proc(){
             initial_state[i] = os.args[i + 1] 
         }
 
-        if !(initial_state in markov){
+        if !(initial_state in markov_he){
             fmt.eprintln("Sorry, I've never seen those words used together :( Please try with others")
             return
         }
     }else{
-        initial_state = markov_sample_initial_state(&markov)
+        initial_state = markov_sample_initial_state(&markov_he)
     }
 
-    hohoho , yay := markov_generate_text(&markov, initial_state , 40 , python_sample)
+    fmt.println("He : ")
     
-    if !yay{
-        fmt.println("Oh no")
+    he_text , he_yay := markov_generate_text(&markov_he, initial_state , 40 , jooj_sample)
+
+
+    if !he_yay{
+        fmt.println("He died")
         return
     }
 
-    fmt.println(hohoho)
+    fmt.println(he_text)
+
+    fmt.println()
+
+    fmt.println("She : ")
+
+    she_text , she_yay := markov_generate_text(&markov_she, initial_state , 40 , jooj_sample)
+    
+        if !she_yay{
+            fmt.println("She died")
+            return
+        }
+        
+    fmt.println(she_text)
+
 
 }   
